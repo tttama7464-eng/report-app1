@@ -11,7 +11,7 @@ import pdfParse from "pdf-parse-fixed";
 console.log("ENV KEY:", process.env.OPENAI_API_KEY);  // ここに値が出てればOK
 
 const app = express();
-const PORT = 8787;
+const PORT = process.env.PORT || 8787;
 
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
