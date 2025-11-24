@@ -61,10 +61,10 @@ export default function App() {
     try {
       setBusy(true);
 
-      const resp = await fetch("http://localhost:8787/ingest", {
-        method: "POST",
-        body: fd,
-      });
+    const resp = await fetch("https://two025-11-22-13-03.onrender.com", {
+  method: "POST",
+  body: fd,
+});
 
       const data = await resp.json();
       if (!data.ok) {
