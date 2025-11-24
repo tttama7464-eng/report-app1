@@ -132,13 +132,15 @@ app.post("/ingest", upload.array("files", 50), async (req, res) => {
   }
 });
 
-// 動作確認用
+// 一番下のほう
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// ★ ここだけ変更：Render でも動くように
-const PORT = process.env.PORT || 8787;
+// ★ ここだけ変える
+const PORT = process.env.PORT || process.env.RENDER_INTERNAL_PORT || 8787;
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
