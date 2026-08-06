@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 255 255 255;
+  --foreground: 17 17 19;
+  --surface: 247 247 249;
+  --surface-elevated: 255 255 255;
+  --border: 226 226 230;
+  --muted: 120 120 128;
+  --accent: 10 132 255;
+  --accent-left: 94 92 230;
+  --accent-right: 255 69 100;
+}
+
+:root[data-theme="dark"] {
+  --background: 0 0 0;
+  --foreground: 245 245 247;
+  --surface: 18 18 20;
+  --surface-elevated: 28 28 30;
+  --border: 44 44 46;
+  --muted: 142 142 147;
+  --accent: 10 132 255;
+  --accent-left: 122 120 255;
+  --accent-right: 255 99 132;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 0 0 0;
+    --foreground: 245 245 247;
+    --surface: 18 18 20;
+    --surface-elevated: 28 28 30;
+    --border: 44 44 46;
+    --muted: 142 142 147;
+    --accent: 10 132 255;
+    --accent-left: 122 120 255;
+    --accent-right: 255 99 132;
+  }
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
+body {
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.25);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.snap-y-mandatory {
+  scroll-snap-type: y mandatory;
+}
+.snap-start {
+  scroll-snap-align: start;
+}
+
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--surface)) 0%,
+    rgb(var(--surface-elevated)) 50%,
+    rgb(var(--surface)) 100%
+  );
+  background-size: 1000px 100%;
+}
