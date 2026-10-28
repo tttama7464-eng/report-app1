@@ -1,3 +1,29 @@
+# レポート提出・評価管理
+
+大学のレポートの提出チェック（未提出者の洗い出し）と S/A/B/C 評価を行うアプリ。
+AI（OpenAI）が提出 PDF を読んで評価の下書きを作り、最終評価は教員が決める。
+
+## 使い方（ローカル）
+
+1. `.env` を作成し、OpenAI の API キーを設定する
+
+   ```
+   OPENAI_API_KEY=sk-...
+   # 任意（既定は gpt-4.1-mini）
+   # OPENAI_MODEL=gpt-4.1-mini
+   ```
+
+2. `npm install` → `npm run dev:all`（サーバー：8787 番、画面：Vite）
+
+画面とサーバーを別の場所に置く場合は、画面側のビルド時に `VITE_API_BASE_URL` にサーバーの URL を設定する。
+
+## 評価基準を変えるとき
+
+AI に渡す課題表・評価基準は `server.js` の `GRADING_PROMPT` にある。
+画面の「評価基準」欄は教員用のメモで、AI への指示には反映されない。
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
