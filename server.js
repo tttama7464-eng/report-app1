@@ -1,5 +1,6 @@
 // server.js
 
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -142,6 +143,13 @@ app.post("/grade", upload.single("file"), async (req, res) => {
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
+});
+
+// ビルド済みの画面（npm run build で dist/ にできる）も同じサーバーから返す
+const DIST_DIR = path.join(__dirname, "dist");
+app.use(express.static(DIST_DIR));
+app.get("*", (_req, res, next) => {
+  res.sendFile(path.join(DIST_DIR, "index.html"), (err) => err && next());
 });
 
 const PORT = process.env.PORT || process.env.RENDER_INTERNAL_PORT || 8787;

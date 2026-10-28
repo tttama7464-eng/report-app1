@@ -19,9 +19,10 @@ type Draft = {
   pages: number;
 };
 
-// 環境変数があれば使う、なければ localhost
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
+// 開発中は別ポートのサーバー、本番は画面と同じサーバー（server.js が画面も返す）
+const API_BASE_URL = import.meta.env.DEV
+  ? import.meta.env.VITE_API_BASE_URL || "http://localhost:8787"
+  : "";
 
 type AppState = {
   assignmentName: string;

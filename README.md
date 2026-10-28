@@ -15,7 +15,13 @@ AI（OpenAI）が提出 PDF を読んで評価の下書きを作り、最終評�
 
 2. `npm install` → `npm run dev:all`（サーバー：8787 番、画面：Vite）
 
-画面とサーバーを別の場所に置く場合は、画面側のビルド時に `VITE_API_BASE_URL` にサーバーの URL を設定する。
+## Render で公開する
+
+- Build Command：`npm install && npm run build`
+- Start Command：`npm start`
+- Environment：`OPENAI_API_KEY` を設定
+
+`server.js` が画面（`dist/`）と API を同じ URL で返す。
 
 ## 評価基準を変えるとき
 
