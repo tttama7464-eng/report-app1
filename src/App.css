@@ -1,42 +1,380 @@
-#root {
-  max-width: 1280px;
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #1f2933;
+  --muted: #6b7280;
+  --border: #e3e6ea;
+  --primary: #2563eb;
+  --done: #dcfce7;
+  --done-border: #86efac;
+  --empty: #fee2e2;
+  --empty-border: #fca5a5;
+  --S: #f5d0fe;
+  --A: #dbeafe;
+  --B: #dcfce7;
+  --C: #fef3c7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+
+.app {
+  max-width: 960px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 24px 16px 48px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+h1 {
+  font-size: 1.5rem;
+  margin: 0 0 12px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 8px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 6px 14px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+button.secondary:hover {
+  border-color: var(--primary);
+}
+
+button.danger {
+  color: #b91c1c;
+}
+
+button.small {
+  padding: 2px 10px;
+  font-size: 0.85rem;
+}
+
+input,
+textarea,
+select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #fff;
+  color: var(--text);
+}
+
+.header-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.header-fields label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  color: var(--muted);
+  gap: 2px;
+}
+
+.header-fields input[type="number"] {
+  width: 100px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs button {
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: none;
+  padding: 8px 16px;
+  color: var(--muted);
+}
+
+.tabs button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
 }
 
 .card {
-  padding: 2em;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
-.read-the-docs {
-  color: #888;
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.card-title-row h2 {
+  margin: 0;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+.message {
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+
+.ok {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.input-row textarea {
+  flex: 1;
+  resize: vertical;
+}
+
+.stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  flex: 1;
+  min-width: 100px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.stat-value small {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.stat.warn .stat-value {
+  color: #b91c1c;
+}
+
+.missing-list {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #b91c1c;
+  line-height: 1.8;
+  margin: 0;
+  word-break: break-word;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+}
+
+.cell {
+  padding: 8px 0;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell.done {
+  background: var(--done);
+  border-color: var(--done-border);
+}
+
+.cell.empty {
+  background: var(--empty);
+  border-color: var(--empty-border);
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.cell.over {
+  border-style: dashed;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.cell.sample {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid;
+  margin-left: 8px;
+}
+
+.grade-S { background: var(--S); }
+.grade-A { background: var(--A); }
+.grade-B { background: var(--B); }
+.grade-C { background: var(--C); }
+
+.stat.grade-S,
+.stat.grade-A,
+.stat.grade-B,
+.stat.grade-C {
+  border-color: transparent;
+}
+
+.criteria summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.criteria-grid {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.criteria-grid label {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.criteria-grid textarea {
+  flex: 1;
+  resize: vertical;
+}
+
+.badge {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.grade-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grade-table th,
+.grade-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.grade-table th {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.grade-table td.num {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  width: 80px;
+}
+
+.grade-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.grade-btn {
+  width: 36px;
+  padding: 4px 0;
+  font-weight: 700;
+  background: #fff;
+  color: var(--muted);
+}
+
+.grade-btn.selected {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.grade-btn.grade-S.selected { background: var(--S); }
+.grade-btn.grade-A.selected { background: var(--A); }
+.grade-btn.grade-B.selected { background: var(--B); }
+.grade-btn.grade-C.selected { background: var(--C); }
+
+.grade-btn:not(.selected) {
+  background: #fff;
+}
+
+.memo {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .grade-table td.num {
+    width: 48px;
+  }
+  .grade-btn {
+    width: 30px;
+  }
 }
