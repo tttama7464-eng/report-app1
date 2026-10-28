@@ -12,10 +12,29 @@ type AppState = {
   submitted: number[];
   grades: Record<number, Grade>;
   memos: Record<number, string>;
+  late: Record<number, boolean>;
   criteria: Record<Grade, string>;
 };
 
 const STORAGE_KEY = "report-app:v1";
+
+// 中間課題「人間のためのみち」の評価基準（最重要：テーマについての論述と独創性）
+const DEFAULT_CRITERIA: Record<Grade, string> = {
+  S: "テーマについての論述が深く、独創性が際立つ。授業で紹介したくなるレベル。",
+  A: "テーマについてしっかり論述できている。ほとんどの人はここ（S+Aで全体の約半分が目安）。",
+  B: "課題の最低限は満たしているが、テーマについての論述・独創性がA に届かない。",
+  C: "空欄・未提出・内容が課題と全く関係ないなど、最低限が守れていないもののみ。",
+};
+
+// 課題表に書かれている要件（評価時の確認用）
+const REQUIREMENTS = [
+  "実際の都市空間の中から「人間らしさ」がまちの表情に表れている「みち」を探している",
+  "写真（またはスケッチ等）がある。WEB写真・ストリートビューなら出典を明示、撮影時期も明示",
+  "立地のレポートがある",
+  "まちの表情をつくっているもの・何がデザインされているかを分析している",
+  "A4 1枚以上・PDF形式・冒頭に①学籍番号 ②氏名 ③タイトル",
+  "提出期間 11/18(火)〜11/24(月)。遅れ提出は 12/1(月)12:00 まで受付・減点、講評対象外",
+];
 
 const EMPTY_STATE: AppState = {
   assignmentName: "",
@@ -23,14 +42,20 @@ const EMPTY_STATE: AppState = {
   submitted: [],
   grades: {},
   memos: {},
-  criteria: { S: "", A: "", B: "", C: "" },
+  late: {},
+  criteria: DEFAULT_CRITERIA,
 };
 
 function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY_STATE;
-    return { ...EMPTY_STATE, ...JSON.parse(raw) };
+    const saved = { ...EMPTY_STATE, ...JSON.parse(raw) } as AppState;
+    // 空欄のままの基準は既定の基準で埋める
+    for (const g of GRADES) {
+      if (!saved.criteria[g]) saved.criteria = { ...saved.criteria, [g]: DEFAULT_CRITERIA[g] };
+    }
+    return saved;
   } catch {
     return EMPTY_STATE;
   }
@@ -107,7 +132,10 @@ export default function App() {
     const memos = Object.fromEntries(
       Object.entries(state.memos).filter(([n]) => keep.has(Number(n)))
     );
-    update({ submitted: sorted, grades, memos });
+    const late = Object.fromEntries(
+      Object.entries(state.late).filter(([n]) => keep.has(Number(n)))
+    );
+    update({ submitted: sorted, grades, memos, late });
   };
 
   const toggleSubmitted = (n: number) => {
@@ -122,14 +150,16 @@ export default function App() {
   };
 
   const exportCsv = () => {
-    const rows: string[][] = [["出席番号", "提出", "評価", "メモ"]];
+    const rows: string[][] = [["出席番号", "提出", "評価", "遅れ提出", "メモ"]];
     const last = Math.max(rosterSize, maxSubmitted);
     for (let n = 1; n <= last; n++) {
       const done = submittedSet.has(n);
       rows.push([
         String(n),
         done ? "提出" : "未提出",
-        state.grades[n] ?? "",
+        // 未提出は C
+        done ? state.grades[n] ?? "" : "C",
+        state.late[n] ? "遅れ" : "",
         state.memos[n] ?? "",
       ]);
     }
@@ -205,7 +235,10 @@ export default function App() {
             else delete grades[n];
             update({ grades });
           }}
+          rosterSize={rosterSize}
+          missingCount={missing.length}
           onMemo={(n, memo) => update({ memos: { ...state.memos, [n]: memo } })}
+          onLate={(n, late) => update({ late: { ...state.late, [n]: late } })}
           onCriteria={(g, text) =>
             update({ criteria: { ...state.criteria, [g]: text } })
           }
@@ -357,8 +390,11 @@ function SubmissionTab(props: {
 
 function GradingTab(props: {
   state: AppState;
+  rosterSize: number;
+  missingCount: number;
   onGrade: (n: number, g: Grade | null) => void;
   onMemo: (n: number, memo: string) => void;
+  onLate: (n: number, late: boolean) => void;
   onCriteria: (g: Grade, text: string) => void;
 }) {
   const { state } = props;
@@ -376,6 +412,11 @@ function GradingTab(props: {
     return state.grades[n] === filter;
   });
 
+  // 未提出者は C として数える。S+A の割合は名簿全体に対して出す
+  const totalC = counts.C + props.missingCount;
+  const total = Math.max(props.rosterSize, state.submitted.length);
+  const saRatio = total ? (counts.S + counts.A) / total : 0;
+
   if (state.submitted.length === 0) {
     return (
       <section className="card">
@@ -390,7 +431,10 @@ function GradingTab(props: {
         {GRADES.map((g) => (
           <div key={g} className={`stat grade-${g}`}>
             <span className="stat-label">{g}</span>
-            <span className="stat-value">{counts[g]}</span>
+            <span className="stat-value">{g === "C" ? totalC : counts[g]}</span>
+            {g === "C" && props.missingCount > 0 && (
+              <span className="stat-note">うち未提出 {props.missingCount}</span>
+            )}
           </div>
         ))}
         <div className="stat">
@@ -399,8 +443,21 @@ function GradingTab(props: {
         </div>
       </div>
 
-      <details className="card criteria">
-        <summary>評価基準</summary>
+      <div className="card ratio">
+        <div className="ratio-label">
+          S+A の割合：<b>{Math.round(saRatio * 100)}%</b>
+          <span className="hint">
+            （{counts.S + counts.A} / {total}人・目安は全体の約半分）
+          </span>
+        </div>
+        <div className="ratio-bar">
+          <div className="ratio-fill" style={{ width: `${Math.min(100, saRatio * 100)}%` }} />
+          <div className="ratio-target" />
+        </div>
+      </div>
+
+      <details className="card criteria" open>
+        <summary>評価基準（最重要：テーマについての論述と独創性）</summary>
         <div className="criteria-grid">
           {GRADES.map((g) => (
             <label key={g}>
@@ -408,12 +465,18 @@ function GradingTab(props: {
               <textarea
                 rows={2}
                 value={state.criteria[g]}
-                placeholder="（評価基準は後で設定）"
+                placeholder="（評価基準を入力）"
                 onChange={(e) => props.onCriteria(g, e.target.value)}
               />
             </label>
           ))}
         </div>
+        <h3>課題の要件（確認用）</h3>
+        <ul className="requirements">
+          {REQUIREMENTS.map((req) => (
+            <li key={req}>{req}</li>
+          ))}
+        </ul>
       </details>
 
       <div className="card">
@@ -437,6 +500,7 @@ function GradingTab(props: {
             <tr>
               <th>出席番号</th>
               <th>評価</th>
+              <th>遅れ</th>
               <th>メモ</th>
             </tr>
           </thead>
@@ -463,6 +527,14 @@ function GradingTab(props: {
                 </td>
                 <td>
                   <input
+                    type="checkbox"
+                    title="遅れ提出（減点・講評対象外）"
+                    checked={!!state.late[n]}
+                    onChange={(e) => props.onLate(n, e.target.checked)}
+                  />
+                </td>
+                <td>
+                  <input
                     type="text"
                     className="memo"
                     value={state.memos[n] ?? ""}
@@ -474,7 +546,7 @@ function GradingTab(props: {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={3} className="hint">
+                <td colSpan={4} className="hint">
                   該当する提出者はいません
                 </td>
               </tr>
