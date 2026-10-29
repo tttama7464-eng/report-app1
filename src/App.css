@@ -173,73 +173,13 @@ select {
   resize: vertical;
 }
 
-.stats {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.stat {
-  flex: 1;
-  min-width: 100px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.stat-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-}
-
-.stat-value small {
-  font-size: 0.9rem;
-  color: var(--muted);
-  font-weight: 400;
-}
-
 .grade-S { background: var(--S); }
+
 .grade-A { background: var(--A); }
+
 .grade-B { background: var(--B); }
+
 .grade-C { background: var(--C); }
-
-.stat.grade-S,
-.stat.grade-A,
-.stat.grade-B,
-.stat.grade-C {
-  border-color: transparent;
-}
-
-.criteria summary {
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.criteria-grid {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.criteria-grid label {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.criteria-grid textarea {
-  flex: 1;
-  resize: vertical;
-}
 
 .badge {
   display: inline-flex;
@@ -249,116 +189,6 @@ select {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-}
-
-.grade-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.grade-table th,
-.grade-table td {
-  padding: 8px;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-}
-
-.grade-table th {
-  font-size: 0.8rem;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.grade-table td.num {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  width: 80px;
-}
-
-.grade-buttons {
-  display: flex;
-  gap: 4px;
-}
-
-.grade-btn {
-  width: 36px;
-  padding: 4px 0;
-  font-weight: 700;
-  background: #fff;
-  color: var(--muted);
-}
-
-.grade-btn.selected {
-  color: var(--text);
-  border-color: var(--text);
-}
-
-.grade-btn.grade-S.selected { background: var(--S); }
-.grade-btn.grade-A.selected { background: var(--A); }
-.grade-btn.grade-B.selected { background: var(--B); }
-.grade-btn.grade-C.selected { background: var(--C); }
-
-.grade-btn:not(.selected) {
-  background: #fff;
-}
-
-.ratio-label {
-  margin-bottom: 8px;
-}
-
-.ratio-bar {
-  position: relative;
-  height: 10px;
-  border-radius: 5px;
-  background: var(--border);
-}
-
-.ratio-fill {
-  height: 100%;
-  border-radius: 5px;
-  background: var(--primary);
-}
-
-/* 目安（50%）の位置 */
-.ratio-target {
-  position: absolute;
-  top: -4px;
-  bottom: -4px;
-  left: 50%;
-  border-left: 2px dashed var(--text);
-}
-
-.criteria h3 {
-  font-size: 0.9rem;
-  margin: 16px 0 4px;
-}
-
-.requirements {
-  margin: 0;
-  padding-left: 20px;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.memo {
-  width: 100%;
-}
-
-@media (max-width: 600px) {
-  .grade-table td.num {
-    width: 48px;
-  }
-  .grade-btn {
-    width: 30px;
-  }
-}
-
-.title-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 button.link {
@@ -373,89 +203,11 @@ button.link.danger {
   color: #b91c1c;
 }
 
-.badge-btn {
-  border: none;
-  padding: 0;
-}
-
-.ai-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.detail-row td {
-  background: #fafbfc;
-}
-
-.draft-detail p {
-  margin: 4px 0;
-  font-size: 0.9rem;
-}
-
-.draft-meta {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.draft-title {
-  font-weight: 600;
-  margin: 2px 0 4px;
-}
-
-.draft-missing {
-  color: #b45309;
-}
-
-.ai-panel h3 {
-  font-size: 0.95rem;
-  margin: 16px 0 4px;
-}
-
-.ai-panel .input-row {
-  align-items: center;
-  flex-wrap: wrap;
-}
-
 .errors {
   color: #b91c1c;
   font-size: 0.85rem;
   margin: 8px 0 0;
   padding-left: 20px;
-}
-
-.pending-list {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-}
-
-.pending-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.pending-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.pending-info .hint {
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pending-name {
-  font-weight: 600;
-}
-
-.pending-number {
-  width: 112px;
 }
 
 .submitted-list {
@@ -480,4 +232,49 @@ button.link.danger {
 .submitted-num {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.file-row {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.file-row input[type="file"] {
+  max-width: 100%;
+}
+
+.result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.result-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.result-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-number {
+  width: 112px;
+}
+
+.result-summary {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
