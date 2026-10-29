@@ -20,6 +20,7 @@ AI（OpenAI）が提出 PDF を読んで評価の下書きを作り、最終評�
 - Build Command：`npm install && npm run build`
 - Start Command：`npm start`
 - Environment：`OPENAI_API_KEY` を設定
+- 合言葉を付けるとき：Environment に `APP_PASSWORD` を追加（未設定なら誰でも使える）
 
 `server.js` が画面（`dist/`）と API を同じ URL で返す。
 

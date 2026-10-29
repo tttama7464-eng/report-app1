@@ -1,5 +1,6 @@
 // server.js
 
+const crypto = require("crypto");
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
@@ -68,8 +69,34 @@ const GRADING_SCHEMA = {
   additionalProperties: false,
 };
 
+// 合言葉（Render の環境変数 APP_PASSWORD）。未設定なら誰でも使える
+const APP_PASSWORD = process.env.APP_PASSWORD || "";
+
+function passwordOk(req) {
+  if (!APP_PASSWORD) return true;
+  let given = "";
+  try {
+    // 日本語の合言葉も送れるよう、画面側で encodeURIComponent している
+    given = decodeURIComponent(req.get("X-App-Password") || "");
+  } catch {
+    return false;
+  }
+  const hash = (s) => crypto.createHash("sha256").update(s).digest();
+  return crypto.timingSafeEqual(hash(given), hash(APP_PASSWORD));
+}
+
+function requirePassword(req, res, next) {
+  if (passwordOk(req)) return next();
+  res.status(401).json({ ok: false, error: "合言葉が違います", auth: true });
+}
+
+// 合言葉が必要か・送られた合言葉が正しいかを返す
+app.get("/auth", (req, res) => {
+  res.json({ required: !!APP_PASSWORD, ok: passwordOk(req) });
+});
+
 // /grade に PDF を1件ずつ投げると、評価の下書きを返す
-app.post("/grade", upload.single("file"), async (req, res) => {
+app.post("/grade", requirePassword, upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) {

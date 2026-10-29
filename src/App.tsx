@@ -29,6 +29,34 @@ type AppState = {
 };
 
 const STORAGE_KEY = "report-app:v1";
+const PASSWORD_KEY = "report-app:password";
+
+function savedPassword(): string {
+  try {
+    return localStorage.getItem(PASSWORD_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function savePassword(password: string) {
+  try {
+    if (password) localStorage.setItem(PASSWORD_KEY, password);
+    else localStorage.removeItem(PASSWORD_KEY);
+  } catch {
+    // 保存できなくても、その画面を開いている間は使える
+  }
+}
+
+// 日本語の合言葉も送れるよう、ヘッダーに入れる前にエンコードする
+const authHeaders = (password: string) => ({
+  "X-App-Password": encodeURIComponent(password),
+});
+
+async function checkPassword(password: string): Promise<{ required: boolean; ok: boolean }> {
+  const resp = await fetch(`${API_BASE_URL}/auth`, { headers: authHeaders(password) });
+  return resp.json();
+}
 
 const EMPTY_STATE: AppState = {
   assignmentName: "",
@@ -139,6 +167,85 @@ function downloadCsv(filename: string, rows: string[][]) {
 }
 
 export default function App() {
+  const [password, setPassword] = useState(savedPassword);
+  const [status, setStatus] = useState<"checking" | "login" | "ready">("checking");
+
+  useEffect(() => {
+    checkPassword(savedPassword())
+      .then(({ required, ok }) => setStatus(required && !ok ? "login" : "ready"))
+      // サーバーに届かないときも画面は出す（AI の読み込みはサーバー側で合言葉を確かめる）
+      .catch(() => setStatus("ready"));
+  }, []);
+
+  if (status === "checking") return null;
+  if (status === "login") {
+    return (
+      <LoginScreen
+        onLogin={(pw) => {
+          savePassword(pw);
+          setPassword(pw);
+          setStatus("ready");
+        }}
+      />
+    );
+  }
+  return (
+    <MainApp
+      password={password}
+      onUnauthorized={() => {
+        savePassword("");
+        setStatus("login");
+      }}
+    />
+  );
+}
+
+function LoginScreen(props: { onLogin: (password: string) => void }) {
+  const [input, setInput] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const { ok } = await checkPassword(input);
+      if (ok) props.onLogin(input);
+      else setError("合言葉が違います");
+    } catch {
+      setError("サーバーにつながりませんでした。少し待ってからもう一度お試しください。");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="app">
+      <div className="card login">
+        <h1>レポート提出・評価管理</h1>
+        <p className="hint">合言葉を入力してください。この端末では次回から入力不要です。</p>
+        <div className="input-row">
+          <input
+            type="password"
+            value={input}
+            autoFocus
+            placeholder="合言葉"
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing && input) submit();
+            }}
+          />
+          <button className="primary" onClick={submit} disabled={busy || !input}>
+            {busy ? "確認中…" : "はじめる"}
+          </button>
+        </div>
+        {error && <p className="errors">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+function MainApp(props: { password: string; onUnauthorized: () => void }) {
   const [state, setState] = useState<AppState>(loadState);
   const [tab, setTab] = useState<"submission" | "grading">("submission");
 
@@ -223,6 +330,8 @@ export default function App() {
       ) : (
         <GradingTab
           results={state.results}
+          password={props.password}
+          onUnauthorized={props.onUnauthorized}
           // 出席番号が分かった結果は ① の提出者にも加える
           onAdd={(result) =>
             setState((s) => ({
@@ -364,6 +473,8 @@ function SubmissionTab(props: {
 
 function GradingTab(props: {
   results: Result[];
+  password: string;
+  onUnauthorized: () => void;
   onAdd: (result: Result) => void;
   onStudentNo: (id: string, studentNo: string | null) => void;
   onRemove: (id: string) => void;
@@ -382,7 +493,17 @@ function GradingTab(props: {
       const fd = new FormData();
       fd.append("file", file);
       try {
-        const resp = await fetch(`${API_BASE_URL}/grade`, { method: "POST", body: fd });
+        const resp = await fetch(`${API_BASE_URL}/grade`, {
+          method: "POST",
+          headers: authHeaders(props.password),
+          body: fd,
+        });
+        if (resp.status === 401) {
+          // 合言葉が変わった場合など。入力し直してもらう
+          alert("合言葉が違います。もう一度入力してください。");
+          props.onUnauthorized();
+          return;
+        }
         const data = await resp.json();
         if (!data.ok) throw new Error(data.error || String(resp.status));
         const d = data.draft;

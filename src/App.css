@@ -306,3 +306,22 @@ button.link.danger {
   color: var(--muted);
   word-break: break-all;
 }
+
+.login {
+  max-width: 420px;
+  margin: 15vh auto 0;
+}
+
+.login h1 {
+  font-size: 1.25rem;
+}
+
+.login input {
+  flex: 1;
+  min-width: 0;
+}
+
+.login .errors {
+  list-style: none;
+  padding: 0;
+}
