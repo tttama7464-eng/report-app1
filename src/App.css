@@ -162,11 +162,6 @@ select {
   margin: 8px 0 0;
 }
 
-.ok {
-  color: #15803d;
-  font-weight: 600;
-}
-
 .input-row {
   display: flex;
   gap: 8px;
@@ -210,65 +205,6 @@ select {
   font-size: 0.9rem;
   color: var(--muted);
   font-weight: 400;
-}
-
-.stat.warn .stat-value {
-  color: #b91c1c;
-}
-
-.missing-list {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #b91c1c;
-  line-height: 1.8;
-  margin: 0;
-  word-break: break-word;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
-  gap: 6px;
-}
-
-.cell {
-  padding: 8px 0;
-  border-radius: 6px;
-  font-variant-numeric: tabular-nums;
-}
-
-.cell.done {
-  background: var(--done);
-  border-color: var(--done-border);
-}
-
-.cell.empty {
-  background: var(--empty);
-  border-color: var(--empty-border);
-  color: #b91c1c;
-  font-weight: 700;
-}
-
-.cell.over {
-  border-style: dashed;
-}
-
-.legend {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.cell.sample {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  padding: 0;
-  border: 1px solid;
-  margin-left: 8px;
 }
 
 .grade-S { background: var(--S); }
@@ -364,11 +300,6 @@ select {
 
 .grade-btn:not(.selected) {
   background: #fff;
-}
-
-.stat-note {
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 
 .ratio-label {
@@ -525,4 +456,28 @@ button.link.danger {
 
 .pending-number {
   width: 112px;
+}
+
+.submitted-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+}
+
+.submitted-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--done);
+  border: 1px solid var(--done-border);
+  border-radius: 6px;
+  padding: 4px 4px 4px 10px;
+}
+
+.submitted-num {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }

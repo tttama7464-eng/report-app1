@@ -26,8 +26,6 @@ const API_BASE_URL = import.meta.env.DEV
 
 type AppState = {
   assignmentName: string;
-  // 名簿の人数（出席番号 1〜classSize が対象）。0 のときは提出済みの最大番号まで
-  classSize: number;
   submitted: number[];
   grades: Record<number, Grade>;
   memos: Record<number, string>;
@@ -61,7 +59,6 @@ const REQUIREMENTS = [
 
 const EMPTY_STATE: AppState = {
   assignmentName: "",
-  classSize: 0,
   submitted: [],
   grades: {},
   memos: {},
@@ -86,7 +83,7 @@ function loadState(): AppState {
   }
 }
 
-// "3 5, 12-15、20" のような入力を番号の配列にする
+// "236343 236350, 236401" のような入力を番号の配列にする
 function parseNumbers(input: string): { numbers: number[]; invalid: string[] } {
   const numbers: number[] = [];
   const invalid: string[] = [];
@@ -94,19 +91,8 @@ function parseNumbers(input: string): { numbers: number[]; invalid: string[] } {
     String.fromCharCode(c.charCodeAt(0) - 0xfee0)
   );
   for (const token of normalized.split(/[\s,、，]+/).filter(Boolean)) {
-    const range = token.match(/^(\d+)[-~〜ー－](\d+)$/);
-    if (range) {
-      const from = Number(range[1]);
-      const to = Number(range[2]);
-      if (from > 0 && from <= to && to - from < 1000) {
-        for (let n = from; n <= to; n++) numbers.push(n);
-        continue;
-      }
-    } else if (/^\d+$/.test(token) && Number(token) > 0) {
-      numbers.push(Number(token));
-      continue;
-    }
-    invalid.push(token);
+    if (/^\d+$/.test(token) && Number(token) > 0) numbers.push(Number(token));
+    else invalid.push(token);
   }
   return { numbers, invalid };
 }
@@ -137,15 +123,6 @@ export default function App() {
     setState((s) => ({ ...s, ...patch }));
 
   const submittedSet = useMemo(() => new Set(state.submitted), [state.submitted]);
-  const maxSubmitted = state.submitted.length
-    ? state.submitted[state.submitted.length - 1]
-    : 0;
-  const rosterSize = state.classSize || maxSubmitted;
-  const missing = useMemo(() => {
-    const list: number[] = [];
-    for (let n = 1; n <= rosterSize; n++) if (!submittedSet.has(n)) list.push(n);
-    return list;
-  }, [rosterSize, submittedSet]);
 
   const setSubmitted = (numbers: number[]) => {
     const sorted = [...new Set(numbers)].sort((a, b) => a - b);
@@ -166,9 +143,10 @@ export default function App() {
     update({ submitted: sorted, grades, memos, late, drafts });
   };
 
-  const toggleSubmitted = (n: number) => {
-    if (submittedSet.has(n)) setSubmitted(state.submitted.filter((x) => x !== n));
-    else setSubmitted([...state.submitted, n]);
+  const removeSubmitted = (n: number) => {
+    const hasData = state.grades[n] || state.drafts[n] || state.memos[n];
+    if (hasData && !confirm(`${n}番の評価・メモ・AIの下書きも消えます。削除しますか？`)) return;
+    setSubmitted(state.submitted.filter((x) => x !== n));
   };
 
   const resetAll = () => {
@@ -176,22 +154,17 @@ export default function App() {
       setState({
         ...EMPTY_STATE,
         criteria: state.criteria,
-        classSize: state.classSize,
         pendingDrafts: [],
       });
     }
   };
 
   const exportCsv = () => {
-    const rows: string[][] = [["出席番号", "提出", "評価", "AI案", "遅れ提出", "メモ", "AIの理由"]];
-    const last = Math.max(rosterSize, maxSubmitted);
-    for (let n = 1; n <= last; n++) {
-      const done = submittedSet.has(n);
+    const rows: string[][] = [["出席番号", "評価", "AI案", "遅れ提出", "メモ", "AIの理由"]];
+    for (const n of state.submitted) {
       rows.push([
         String(n),
-        done ? "提出" : "未提出",
-        // 未提出は C
-        done ? state.grades[n] ?? "" : "C",
+        state.grades[n] ?? "",
         state.drafts[n]?.grade ?? "",
         state.late[n] ? "遅れ" : "",
         state.memos[n] ?? "",
@@ -213,18 +186,6 @@ export default function App() {
               value={state.assignmentName}
               placeholder="例：第3回レポート"
               onChange={(e) => update({ assignmentName: e.target.value })}
-            />
-          </label>
-          <label>
-            名簿の人数
-            <input
-              type="number"
-              min={0}
-              value={state.classSize || ""}
-              placeholder="例：40"
-              onChange={(e) =>
-                update({ classSize: Math.max(0, Math.floor(Number(e.target.value) || 0)) })
-              }
             />
           </label>
           <button className="secondary" onClick={exportCsv}>
@@ -255,11 +216,8 @@ export default function App() {
         <SubmissionTab
           submitted={state.submitted}
           submittedSet={submittedSet}
-          classSize={state.classSize}
-          rosterSize={rosterSize}
-          missing={missing}
           onAdd={(nums) => setSubmitted([...state.submitted, ...nums])}
-          onToggle={toggleSubmitted}
+          onRemove={removeSubmitted}
         />
       ) : (
         <GradingTab
@@ -270,8 +228,6 @@ export default function App() {
             else delete grades[n];
             update({ grades });
           }}
-          rosterSize={rosterSize}
-          missingCount={missing.length}
           onMemo={(n, memo) => update({ memos: { ...state.memos, [n]: memo } })}
           onLate={(n, late) => update({ late: { ...state.late, [n]: late } })}
           onDrafts={(drafts) =>
@@ -314,13 +270,10 @@ export default function App() {
 function SubmissionTab(props: {
   submitted: number[];
   submittedSet: Set<number>;
-  classSize: number;
-  rosterSize: number;
-  missing: number[];
   onAdd: (nums: number[]) => void;
-  onToggle: (n: number) => void;
+  onRemove: (n: number) => void;
 }) {
-  const { submitted, submittedSet, classSize, rosterSize, missing } = props;
+  const { submitted, submittedSet } = props;
   const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
@@ -329,9 +282,7 @@ function SubmissionTab(props: {
     const { numbers, invalid } = parseNumbers(input);
     const notes: string[] = [];
     const dup = numbers.filter((n) => submittedSet.has(n));
-    const over = classSize ? numbers.filter((n) => n > classSize) : [];
     if (dup.length) notes.push(`登録済み: ${[...new Set(dup)].join(", ")}`);
-    if (over.length) notes.push(`名簿の人数(${classSize})を超える番号: ${over.join(", ")}`);
     if (invalid.length) notes.push(`読み取れない入力: ${invalid.join(" ")}`);
     const added = numbers.filter((n) => !submittedSet.has(n));
     if (added.length) props.onAdd(added);
@@ -343,9 +294,9 @@ function SubmissionTab(props: {
     setInput(invalid.join(" "));
   };
 
-  const copyMissing = async () => {
+  const copySubmitted = async () => {
     try {
-      await navigator.clipboard.writeText(missing.join(", "));
+      await navigator.clipboard.writeText(submitted.join("\n"));
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -353,24 +304,16 @@ function SubmissionTab(props: {
     }
   };
 
-  // 名簿の範囲 + 範囲外で入力された番号（入力ミス確認用）
-  const cells = [
-    ...Array.from({ length: rosterSize }, (_, i) => i + 1),
-    ...submitted.filter((n) => n > rosterSize),
-  ];
-
   return (
     <section>
       <div className="card">
         <h2>提出した出席番号を入力</h2>
-        <p className="hint">
-          スペース・カンマ・改行区切りでまとめて入力できます。「12-15」のような範囲指定も可。
-        </p>
+        <p className="hint">スペース・カンマ・改行区切りでまとめて入力できます。</p>
         <div className="input-row">
           <textarea
             value={input}
             rows={2}
-            placeholder="例：3 7 12 1 25-28"
+            placeholder="例：236343 236350 236401"
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -386,75 +329,43 @@ function SubmissionTab(props: {
         {message && <p className="message">{message}</p>}
       </div>
 
-      <div className="stats">
-        <div className="stat">
-          <span className="stat-label">提出</span>
-          <span className="stat-value">
-            {submitted.length}
-            {rosterSize > 0 && <small> / {rosterSize}</small>}
-          </span>
-        </div>
-        <div className="stat warn">
-          <span className="stat-label">未提出（空欄）</span>
-          <span className="stat-value">{missing.length}</span>
-        </div>
-      </div>
-
       <div className="card">
         <div className="card-title-row">
-          <h2>未提出の出席番号</h2>
-          {missing.length > 0 && (
-            <button className="secondary small" onClick={copyMissing}>
+          <h2>提出者（番号順）：{submitted.length}人</h2>
+          {submitted.length > 0 && (
+            <button className="secondary small" onClick={copySubmitted}>
               {copied ? "コピーしました" : "コピー"}
             </button>
           )}
         </div>
-        {rosterSize === 0 ? (
-          <p className="hint">出席番号を入力すると、ここに空欄が表示されます。</p>
-        ) : missing.length === 0 ? (
-          <p className="ok">全員提出済みです 🎉</p>
+        {submitted.length === 0 ? (
+          <p className="hint">出席番号を入力すると、ここに番号順で並びます。</p>
         ) : (
-          <p className="missing-list">{missing.join(", ")}</p>
-        )}
-        {!classSize && submitted.length > 0 && (
-          <p className="hint">
-            ※ 名簿の人数が未設定のため、{rosterSize}番より後ろの未提出は判定できません。上部で人数を設定してください。
-          </p>
+          <>
+            <p className="hint">入力ミスは × で削除できます。</p>
+            <ol className="submitted-list">
+              {submitted.map((n) => (
+                <li key={n}>
+                  <span className="submitted-num">{n}</span>
+                  <button
+                    className="link danger"
+                    title="削除"
+                    onClick={() => props.onRemove(n)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </>
         )}
       </div>
-
-      {cells.length > 0 && (
-        <div className="card">
-          <h2>番号一覧</h2>
-          <p className="hint">クリックで提出／未提出を切り替えられます（入力ミスの修正用）。</p>
-          <div className="grid">
-            {cells.map((n) => (
-              <button
-                key={n}
-                className={`cell ${submittedSet.has(n) ? "done" : "empty"} ${
-                  classSize && n > classSize ? "over" : ""
-                }`}
-                title={submittedSet.has(n) ? "提出済み" : "未提出"}
-                onClick={() => props.onToggle(n)}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-          <div className="legend">
-            <span className="cell done sample" /> 提出済み
-            <span className="cell empty sample" /> 未提出
-          </div>
-        </div>
-      )}
     </section>
   );
 }
 
 function GradingTab(props: {
   state: AppState;
-  rosterSize: number;
-  missingCount: number;
   onGrade: (n: number, g: Grade | null) => void;
   onMemo: (n: number, memo: string) => void;
   onLate: (n: number, late: boolean) => void;
@@ -483,9 +394,8 @@ function GradingTab(props: {
 
   const adoptable = state.submitted.filter((n) => !state.grades[n] && state.drafts[n]).length;
 
-  // 未提出者は C として数える。S+A の割合は名簿全体に対して出す
-  const totalC = counts.C + props.missingCount;
-  const total = Math.max(props.rosterSize, state.submitted.length);
+  // S+A の割合は提出者全体に対して出す
+  const total = state.submitted.length;
   const saRatio = total ? (counts.S + counts.A) / total : 0;
 
   const toggleRow = (n: number) =>
@@ -518,10 +428,7 @@ function GradingTab(props: {
             {GRADES.map((g) => (
               <div key={g} className={`stat grade-${g}`}>
                 <span className="stat-label">{g}</span>
-                <span className="stat-value">{g === "C" ? totalC : counts[g]}</span>
-                {g === "C" && props.missingCount > 0 && (
-                  <span className="stat-note">うち未提出 {props.missingCount}</span>
-                )}
+                <span className="stat-value">{counts[g]}</span>
               </div>
             ))}
             <div className="stat">
@@ -534,7 +441,7 @@ function GradingTab(props: {
             <div className="ratio-label">
               S+A の割合：<b>{Math.round(saRatio * 100)}%</b>
               <span className="hint">
-                （{counts.S + counts.A} / {total}人・目安は全体の約半分）
+                （提出者 {total}人中 {counts.S + counts.A}人・目安は約半分）
               </span>
             </div>
             <div className="ratio-bar">
